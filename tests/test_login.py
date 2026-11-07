@@ -5,10 +5,10 @@ from playwright.sync_api import expect
 
 @pytest.mark.parametrize("username, password, expected", [
     pytest.param("standard_user", "secret_sauce", "success", id="tc01"),
-    pytest.param("standard_user", "salah123", "failed,", id="tc02"),
+    pytest.param("standard_user", "salah123", "failed", id="tc02"),
     pytest.param("salah_user", "secret_sauce", "failed", id="tc03"),
 ])
-def test_login_success(page, username, password, expected):
+def test_login(page, username, password, expected):
     login_page = LoginPage(page)
 
     login_page.open()

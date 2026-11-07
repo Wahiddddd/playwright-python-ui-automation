@@ -47,9 +47,11 @@ htmlcov/
 # Test Reports and Output Artifacts
 reports/
 screenshots/
+traces/
 *.png
 *.jpg
 *.jpeg
+*.zip
 
 # IDE & Editors
 .idea/

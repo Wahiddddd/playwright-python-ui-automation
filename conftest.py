@@ -1,21 +1,53 @@
 import pytest
 import base64
 import pytest_html
+import shutil
+import os
 
 from playwright.sync_api import sync_playwright, expect
 from pages.login_page import LoginPage
 from pathlib import Path
 
 @pytest.fixture
-def page():
+def page(request):
     with sync_playwright() as p:
         p.selectors.set_test_id_attribute("data-test")
-        browser = p.chromium.launch(headless=False)
-        page = browser.new_page()
+        
+        # Di environment CI (GitHub Actions), gunakan headless=True otomatis
+        is_ci = os.getenv("CI", "false").lower() in ("true", "1")
+        is_headless = True if is_ci else os.getenv("HEADLESS", "false").lower() in ("true", "1")
+        
+        browser = p.chromium.launch(headless=is_headless)
+
+        context = browser.new_context()
+        page = context.new_page()
+
+        context.tracing.start(
+            screenshots=True,
+            snapshots=True,
+            sources=True
+        )
 
         yield page
 
-        browser.close()
+        try:
+            report = getattr(request.node, "rep_call", None)
+            trace_name = request.node.name.replace("[", "_").replace("]", "")
+            trace_dir = Path("traces")
+            trace_file = trace_dir / f"{trace_name}.zip"
+
+            if report and report.failed:
+                trace_dir.mkdir(exist_ok=True)
+                context.tracing.stop(path=str(trace_file))
+            else:
+                # Jika test berhasil, buang rekaman dan hapus trace lama (jika ada)
+                if trace_file.exists():
+                    trace_file.unlink()
+                context.tracing.stop()
+
+        finally:
+            context.close()
+            browser.close()
 
 @pytest.fixture
 def logged_in_user(page):
@@ -37,6 +69,11 @@ def pytest_runtest_makereport(item, call):
     setattr(item, f"rep_{report.when}", report)
     if report.when == "call" and report.failed:
         page = item.funcargs.get("page")
+        if page is None:
+            for arg in item.funcargs.values():
+                if hasattr(arg, "screenshot"):
+                    page = arg
+                    break
         if page is not None:
             screenshot_dir = Path("screenshots")
             screenshot_dir.mkdir(exist_ok=True)
@@ -60,4 +97,12 @@ def pytest_runtest_makereport(item, call):
                 )
             )
             report.extras = extras
+
+def pytest_sessionstart(session):
+    """Dijalankan sekali sebelum semua test dimulai untuk membersihkan folder lama."""
+    for folder_name in ["traces", "screenshots"]:
+        folder = Path(folder_name)
+        if folder.exists():
+            shutil.rmtree(folder)
+        folder.mkdir(exist_ok=True)
     

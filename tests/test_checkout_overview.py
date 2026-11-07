@@ -5,7 +5,7 @@ from pages.checkout_overview_page import CheckoutOverviewPage
 
 from playwright.sync_api import expect
 
-def test_checkout_oerview(logged_in_user):
+def test_checkout_overview(logged_in_user):
     page = logged_in_user
 
     # Inventory
