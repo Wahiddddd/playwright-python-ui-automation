@@ -68,7 +68,7 @@ saucedemo_automation/
 
 ```bash
 git clone https://github.com/Wahiddddd/playwright-python-ui-automation.git
-cd saucedemo_automation
+cd playwright-python-ui-automation
 ```
 
 ### 2. Buat & Aktifkan Virtual Environment

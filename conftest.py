@@ -100,9 +100,9 @@ def pytest_runtest_makereport(item, call):
 
 def pytest_sessionstart(session):
     """Dijalankan sekali sebelum semua test dimulai untuk membersihkan folder lama."""
-    for folder_name in ["traces", "screenshots"]:
+    for folder_name in ["traces", "screenshots", "reports"]:
         folder = Path(folder_name)
         if folder.exists():
-            shutil.rmtree(folder)
+            shutil.rmtree(folder, ignore_errors=True)
         folder.mkdir(exist_ok=True)
     
